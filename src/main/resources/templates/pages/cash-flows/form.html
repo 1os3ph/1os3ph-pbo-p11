@@ -15,14 +15,14 @@
                     <small class="text-muted"> &lt; Kembali ke List </small>
                 </a>
                 
-                <h3 th:text="${cashFlow.id == null ? 'Tambah Transaksi Baru' : 'Ubah Transaksi'}">
+                <h3 th:text="${cashFlowForm.id == null ? 'Tambah Transaksi Baru' : 'Ubah Transaksi'}">
                     Form Transaksi
                 </h3>
             </div>
             
             <div class="card-body">
-                <form th:action="${cashFlow.id == null ? '/cash-flows/add' : '/cash-flows/edit/' + cashFlow.id}" 
-                      th:object="${cashFlow}" method="post">
+                <form th:action="${cashFlowForm.id == null ? '/cash-flows/add' : '/cash-flows/edit/' + cashFlow.id}" 
+                      th:object="${cashFlowForm}" method="post">
                     
                     <!-- Tipe Transaksi -->
                     <div class="mb-3">
