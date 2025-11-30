@@ -14,11 +14,22 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3>Hay, <span th:text="${user.name}">User</span></h3>
                 <div>
-                     <!-- Tombol ke Home Todo (Opsional, agar bisa balik ke todo) -->
                     <a th:href="@{/}" class="btn btn-sm btn-outline-secondary me-2">Ke Todo List</a>
                     <a th:href="@{/auth/logout}" class="btn btn-sm btn-danger">Keluar</a>
                 </div>
             </div>
+        </div>
+
+        <!-- NOTIFIKASI / ALERT (PENTING: Untuk menampilkan pesan Sukses/Gagal) -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
         <!-- SUMMARY CARDS (Info Keuangan) -->
@@ -53,11 +64,11 @@
         </div>
 
         <!-- TABEL TRANSAKSI -->
-        <div class="card">
+        <div class="card shadow-sm">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3>Daftar Cash Flow</h3>
-                    <!-- Tombol Tambah -> Lari ke halaman Form -->
+                    <!-- Tombol Tambah -->
                     <a th:href="@{/cash-flows/add}" class="btn btn-primary">
                         + Tambah Transaksi
                     </a>
@@ -72,46 +83,50 @@
                     </div>
                 </form>
 
-                <table class="table table-striped table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tipe</th>
-                            <th>Label</th>
-                            <th>Sumber</th>
-                            <th>Nominal</th>
-                            <th>Dibuat pada</th>
-                            <th>Tindakan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="item : ${cashFlows}">
-                            <td>
-                                <span th:if="${item.type == 'CASH_IN'}" class="badge bg-success">Pemasukan</span>
-                                <span th:if="${item.type == 'CASH_OUT'}" class="badge bg-danger">Pengeluaran</span>
-                            </td>
-                            <td th:text="${item.label}" class="fw-bold"></td>
-                            <td th:text="${item.source}"></td>
-                            <td th:text="'Rp ' + ${item.amount}"></td>
-                            <td th:text="${#temporals.format(item.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
-                            <td>
-                                <!-- Tombol Edit -->
-                                <a th:href="@{/cash-flows/edit/{id}(id=${item.id})}" class="btn btn-sm btn-warning">
-                                    Edit
-                                </a>
-                                <!-- Tombol Hapus -->
-                                <form th:action="@{/cash-flows/delete/{id}(id=${item.id})}" method="post" style="display:inline;"
-                                      onsubmit="return confirm('Yakin ingin menghapus data ini?');">
-                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
-                                </form>
-                            </td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(cashFlows)}">
-                            <td colspan="6" class="text-center text-muted">Belum ada data transaksi.</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tipe</th>
+                                <th>Label</th>
+                                <th>Sumber</th>
+                                <th>Nominal</th>
+                                <th>Dibuat pada</th>
+                                <th>Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${cashFlows}">
+                                <td>
+                                    <span th:if="${item.type == 'CASH_IN'}" class="badge bg-success">Pemasukan</span>
+                                    <span th:if="${item.type == 'CASH_OUT'}" class="badge bg-danger">Pengeluaran</span>
+                                </td>
+                                <td th:text="${item.label}" class="fw-bold"></td>
+                                <td th:text="${item.source}"></td>
+                                <td th:text="'Rp ' + ${item.amount}"></td>
+                                <td th:text="${#temporals.format(item.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+                                <td>
+                                    <!-- Tombol Edit -->
+                                    <a th:href="@{/cash-flows/edit/{id}(id=${item.id})}" class="btn btn-sm btn-warning">
+                                        Edit
+                                    </a>
+                                    <!-- Tombol Hapus -->
+                                    <form th:action="@{/cash-flows/delete/{id}(id=${item.id})}" method="post" style="display:inline;"
+                                          onsubmit="return confirm('Yakin ingin menghapus data ini?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(cashFlows)}">
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    Belum ada data transaksi. Silakan tambah data baru.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </body>
-</html> 
+</html>
