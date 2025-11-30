@@ -3,6 +3,7 @@ package org.delcom.app.views;
 import java.util.List;
 import java.util.UUID;
 
+import org.delcom.app.dto.CashFlowForm; 
 import org.delcom.app.entities.CashFlow;
 import org.delcom.app.entities.User;
 import org.delcom.app.services.CashFlowService;
@@ -24,33 +25,25 @@ public class CashFlowView {
         this.cashFlowService = cashFlowService;
     }
 
-    // Helper method untuk cek user login (biar kodenya tidak berulang-ulang)
     private User getAuthUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof AnonymousAuthenticationToken) {
+        if (authentication instanceof AnonymousAuthenticationToken)
             return null;
-        }
         Object principal = authentication.getPrincipal();
-        if (!(principal instanceof User)) {
-            return null;
-        }
-        return (User) principal;
+        return (principal instanceof User) ? (User) principal : null;
     }
 
-    // ==========================================
-    // 1. LIST PAGE (HOME)
-    // ==========================================
     @GetMapping
     public String listCashFlows(@RequestParam(required = false) String search, Model model) {
         User user = getAuthUser();
-        if (user == null) return "redirect:/auth/logout";
+        if (user == null)
+            return "redirect:/auth/logout";
 
-        // Ambil Data
         List<CashFlow> cashFlows = cashFlowService.getAllCashFlows(user.getId(), search);
 
-        // Hitung Summary
         int totalIn = cashFlows.stream().filter(c -> "CASH_IN".equals(c.getType())).mapToInt(CashFlow::getAmount).sum();
-        int totalOut = cashFlows.stream().filter(c -> "CASH_OUT".equals(c.getType())).mapToInt(CashFlow::getAmount).sum();
+        int totalOut = cashFlows.stream().filter(c -> "CASH_OUT".equals(c.getType())).mapToInt(CashFlow::getAmount)
+                .sum();
 
         model.addAttribute("cashFlows", cashFlows);
         model.addAttribute("search", search);
@@ -62,52 +55,50 @@ public class CashFlowView {
         return "pages/cash-flows/home";
     }
 
-    // ==========================================
-    // 2. ADD PAGE (FORM)
-    // ==========================================
+    // Pakai CashFlowForm ===
     @GetMapping("/add")
     public String addCashFlowPage(Model model) {
         User user = getAuthUser();
-        if (user == null) return "redirect:/auth/logout";
+        if (user == null)
+            return "redirect:/auth/logout";
 
-        model.addAttribute("cashFlow", new CashFlow());
+        model.addAttribute("cashFlowForm", new CashFlowForm()); // Kirim Form Kosong
         return "pages/cash-flows/form";
     }
 
-    // ==========================================
-    // 3. PROCESS ADD
-    // ==========================================
+    // Terima CashFlowForm ===
     @PostMapping("/add")
-    public String postAddCashFlow(@ModelAttribute CashFlow cashFlow, RedirectAttributes redirectAttributes) {
+    public String postAddCashFlow(@ModelAttribute("cashFlowForm") CashFlowForm form,
+            RedirectAttributes redirectAttributes) {
         User user = getAuthUser();
-        if (user == null) return "redirect:/auth/logout";
+        if (user == null)
+            return "redirect:/auth/logout";
 
-        // Validasi Sederhana
-        if (cashFlow.getAmount() == null || cashFlow.getAmount() <= 0) {
+        // Validasi Manual (Bisa juga pakai @Valid)
+        if (form.getAmount() == null || form.getAmount() <= 0) {
             redirectAttributes.addFlashAttribute("error", "Nominal harus lebih dari 0");
             return "redirect:/cash-flows/add";
         }
 
+        // Panggil Service pakai data dari Form
         cashFlowService.createCashFlow(
                 user.getId(),
-                cashFlow.getType(),
-                cashFlow.getSource(),
-                cashFlow.getLabel(),
-                cashFlow.getAmount(),
-                cashFlow.getDescription()
-        );
+                form.getType(),
+                form.getSource(),
+                form.getLabel(),
+                form.getAmount(),
+                form.getDescription());
 
         redirectAttributes.addFlashAttribute("success", "Transaksi berhasil ditambahkan.");
         return "redirect:/cash-flows";
     }
 
-    // ==========================================
-    // 4. EDIT PAGE (FORM)
-    // ==========================================
+    // Mapping Entity ke Form 
     @GetMapping("/edit/{id}")
     public String editCashFlowPage(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
         User user = getAuthUser();
-        if (user == null) return "redirect:/auth/logout";
+        if (user == null)
+            return "redirect:/auth/logout";
 
         CashFlow cashFlow = cashFlowService.getCashFlowById(user.getId(), id);
         if (cashFlow == null) {
@@ -115,41 +106,46 @@ public class CashFlowView {
             return "redirect:/cash-flows";
         }
 
-        model.addAttribute("cashFlow", cashFlow);
+        // Mapping Data Entity -> Form
+        CashFlowForm form = new CashFlowForm();
+        form.setId(cashFlow.getId());
+        form.setType(cashFlow.getType());
+        form.setSource(cashFlow.getSource());
+        form.setLabel(cashFlow.getLabel());
+        form.setAmount(cashFlow.getAmount());
+        form.setDescription(cashFlow.getDescription());
+
+        model.addAttribute("cashFlowForm", form); // Kirim Form yang sudah terisi
         return "pages/cash-flows/form";
     }
 
-    // ==========================================
-    // 5. PROCESS EDIT
-    // ==========================================
+    // Terima CashFlowForm
     @PostMapping("/edit/{id}")
-    public String postEditCashFlow(@PathVariable UUID id, @ModelAttribute CashFlow cashFlow, RedirectAttributes redirectAttributes) {
+    public String postEditCashFlow(@PathVariable UUID id, @ModelAttribute("cashFlowForm") CashFlowForm form,
+            RedirectAttributes redirectAttributes) {
         User user = getAuthUser();
-        if (user == null) return "redirect:/auth/logout";
+        if (user == null)
+            return "redirect:/auth/logout";
 
         cashFlowService.updateCashFlow(
                 user.getId(), id,
-                cashFlow.getType(),
-                cashFlow.getSource(),
-                cashFlow.getLabel(),
-                cashFlow.getAmount(),
-                cashFlow.getDescription()
-        );
+                form.getType(),
+                form.getSource(),
+                form.getLabel(),
+                form.getAmount(),
+                form.getDescription());
 
         redirectAttributes.addFlashAttribute("success", "Transaksi berhasil diperbarui.");
         return "redirect:/cash-flows";
     }
 
-    // ==========================================
-    // 6. PROCESS DELETE
-    // ==========================================
+    // Delete tetap sama karena hanya butuh ID
     @PostMapping("/delete/{id}")
     public String postDeleteCashFlow(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
         User user = getAuthUser();
-        if (user == null) return "redirect:/auth/logout";
-
+        if (user == null)
+            return "redirect:/auth/logout";
         cashFlowService.deleteCashFlow(user.getId(), id);
-        
         redirectAttributes.addFlashAttribute("success", "Transaksi berhasil dihapus.");
         return "redirect:/cash-flows";
     }
